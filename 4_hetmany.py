@@ -222,5 +222,5 @@ class CzteryHetmany():
         print(f"{znak}")
 
 
-
-doctest.testmod()
+if __name__ == "__main__":
+  doctest.testmod()
