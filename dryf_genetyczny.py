@@ -3,40 +3,38 @@ import itertools
 
 
 class organizm:
-    pola_genow = [['A', 'a'], ['B', 'b'], ['C', 'c'], ['D', 'd']]
+    pola_genow = [["A", "a"], ["B", "b"], ["C", "c"], ["D", "d"]]
     ilosc_genow = len(pola_genow)
     ilosc_alleli = 2
 
     def __init__(self, dna_do_przekazania=[]):
         self.DNA = []
+        self._uzupelnij_DNA(dna_do_przekazania)
 
-        if not dna_do_przekazania:
-            self._uzupelnij_DNA()
-        else:
-            self._losuj_gen_rodzicow(dna_do_przekazania)
-            pass
-
-    def _uzupelnij_DNA(self):
+    def _uzupelnij_DNA(self, dna_do_przekazania=[]):
         for gen in range(self.ilosc_genow):
-            warian_genu = self._losuj_gen_1_generacji()
+            warian_genu = self.losuj_geny(gen, dna_do_przekazania)
             self.DNA.append(warian_genu)
 
-    def _losuj_gen_rodzicow(self, lista_DNA):
-        zestaw1 = lista_DNA[0]
-        zestaw2 = lista_DNA[1]
-        for gen in range(self.ilosc_genow):
-            pierwszy_allel = zestaw1[gen][random.randrange(
-                0, self.ilosc_alleli)]
-            drugi_allel = zestaw2[gen][random.randrange(0, self.ilosc_alleli)]            
-            self.DNA.append(pierwszy_allel+drugi_allel)
     def licz_wystapienia_allela(self):
-        pass
-    def _losuj_gen_1_generacji(self):
+        liczba_wystapien = {}
+        for gen in self.DNA:            
+            allele = str(gen)
+            for allel in allele:                
+                if allel in liczba_wystapien: liczba_wystapien[allel] += 1
+                else: liczba_wystapien[allel] = 1
+        return liczba_wystapien
+
+    
+    def losuj_geny(self,numer_genu=0, lista_DNA=[]):
         indeks_genu = random.randrange(0, self.ilosc_genow)
-        allel1 = self.pola_genow[indeks_genu][random.randrange(
-            0, self.ilosc_alleli)]
-        allel2 = self.pola_genow[indeks_genu][random.randrange(
-            0, self.ilosc_alleli)]
+        if not lista_DNA:            
+            allel1 = self.pola_genow[numer_genu][random.randrange(0, self.ilosc_alleli)]
+            allel2 = self.pola_genow[numer_genu][random.randrange(0, self.ilosc_alleli)]
+        else:
+            allel1  = lista_DNA[0][numer_genu][random.randrange(0, self.ilosc_alleli)]
+            allel2  = lista_DNA[1][numer_genu][random.randrange(0, self.ilosc_alleli)]            
+        
         return allel1 + allel2
 
     def __str__(self):
@@ -78,4 +76,5 @@ if __name__ == "__main__":
         populacja_startowa = lista_pokoleniowa
 
 for indeks in range(len(calkowita_populacja)):
-    print(f"indeks {indeks} {calkowita_populacja[indeks]}")
+
+    print(f"indeks {indeks} {calkowita_populacja[indeks].licz_wystapienia_allela()}")
