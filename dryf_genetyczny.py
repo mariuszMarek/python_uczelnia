@@ -1,9 +1,11 @@
 import random
-import itertools
+import csv
+from collections import Counter
 
 
 class organizm:
     pola_genow = [["A", "a"], ["B", "b"], ["C", "c"], ["D", "d"]]
+    kolejnosc_zapisu = ['A', 'a', 'B', 'b', 'C', 'c', 'D', 'd']
     ilosc_genow = len(pola_genow)
     ilosc_alleli = 2
 
@@ -13,68 +15,72 @@ class organizm:
 
     def _uzupelnij_DNA(self, dna_do_przekazania=[]):
         for gen in range(self.ilosc_genow):
-            warian_genu = self.losuj_geny(gen, dna_do_przekazania)
+            warian_genu = self._losuj_geny(gen, dna_do_przekazania)
             self.DNA.append(warian_genu)
 
     def licz_wystapienia_allela(self):
-        liczba_wystapien = {}
-        for gen in self.DNA:            
-            allele = str(gen)
-            for allel in allele:                
-                if allel in liczba_wystapien: liczba_wystapien[allel] += 1
-                else: liczba_wystapien[allel] = 1
+        liczba_wystapien = Counter(
+            {klucz: 0 for klucz in self.kolejnosc_zapisu})
+        liczba_wystapien.update("".join(self.DNA))
         return liczba_wystapien
 
-    
-    def losuj_geny(self,numer_genu=0, lista_DNA=[]):
-        indeks_genu = random.randrange(0, self.ilosc_genow)
-        if not lista_DNA:            
-            allel1 = self.pola_genow[numer_genu][random.randrange(0, self.ilosc_alleli)]
-            allel2 = self.pola_genow[numer_genu][random.randrange(0, self.ilosc_alleli)]
+    def _losuj_geny(self, numer_genu=0, lista_DNA=[]):
+        if not lista_DNA:
+            allel1 = self.pola_genow[numer_genu][random.randrange(
+                0, self.ilosc_alleli)]
+            allel2 = self.pola_genow[numer_genu][random.randrange(
+                0, self.ilosc_alleli)]
         else:
-            allel1  = lista_DNA[0][numer_genu][random.randrange(0, self.ilosc_alleli)]
-            allel2  = lista_DNA[1][numer_genu][random.randrange(0, self.ilosc_alleli)]            
-        
+            allel1 = lista_DNA[0][numer_genu][random.randrange(
+                0, self.ilosc_alleli)]
+            allel2 = lista_DNA[1][numer_genu][random.randrange(
+                0, self.ilosc_alleli)]
+
         return allel1 + allel2
 
     def __str__(self):
         return f"{self.DNA[0]} {self.DNA[1]}  {self.DNA[2]}  {self.DNA[3]}"
 
 
+def zamien_wartosci_na_proporcje(slownik_licznik):
+    calkowita_suma = slownik_licznik.total()
+    for klucze in slownik_licznik:
+        slownik_licznik[klucze] /= calkowita_suma
+
+
 if __name__ == "__main__":
 
-    liczba_startowa = 10
-    liczba_pokolen = 10
+    liczba_startowa = 20
+    liczba_pokolen = 50
+    liczba_dzieci = 2
     populacja_startowa = []
-    calkowita_populacja = []
+    suma_alleli = Counter()
+    nazwa_pliky_wynikowego = "poklenia.csv"
 
-    for kolejny_osobnik in range(liczba_startowa):
+    for _ in range(liczba_startowa):
         rodzic = organizm()
         populacja_startowa.append(rodzic)
-    calkowita_populacja = populacja_startowa
+        suma_alleli.update(rodzic.licz_wystapienia_allela())
+    zamien_wartosci_na_proporcje(suma_alleli)
+    with open(nazwa_pliky_wynikowego, "w", newline="") as plik_wynikowy:
+        zapisuj = csv.writer(plik_wynikowy, delimiter=";")
+        zapisuj.writerow(suma_alleli.keys())
+        zapisuj.writerow(suma_alleli.values())
 
-    unikalne_indeksy_bez_powtorzen = list(range(liczba_startowa))
-    random.shuffle(unikalne_indeksy_bez_powtorzen)
-
-    for numer_generacji in range(liczba_pokolen):
-        lista_pokoleniowa = []
-        for kolejne_kojarzeni in range(int(liczba_pokolen/2)):
-
-            indeks_rodzic1 = unikalne_indeksy_bez_powtorzen[kolejne_kojarzeni]
-            indeks_rodzic2 = unikalne_indeksy_bez_powtorzen[kolejne_kojarzeni+1]
-
-            rodzic1 = populacja_startowa[indeks_rodzic1]
-            rodzic2 = populacja_startowa[indeks_rodzic2]
-
-            potomekA = organizm([rodzic1.DNA,rodzic2.DNA])
-            potomekB = organizm([rodzic1.DNA,rodzic2.DNA])
-
-            lista_pokoleniowa.append(potomekA)
-            lista_pokoleniowa.append(potomekB)
-
-        calkowita_populacja = calkowita_populacja + lista_pokoleniowa
-        populacja_startowa = lista_pokoleniowa
-
-for indeks in range(len(calkowita_populacja)):
-
-    print(f"indeks {indeks} {calkowita_populacja[indeks].licz_wystapienia_allela()}")
+        for _ in range(liczba_pokolen):
+            lista_pokoleniowa = []
+            suma_alleli.clear()
+            random.shuffle(populacja_startowa)
+            try:
+                kolejne_kojarzenie = 0
+                while kolejne_kojarzenie < len(populacja_startowa):
+                    for _ in range(liczba_dzieci):                        
+                        dziecko = organizm([populacja_startowa[kolejne_kojarzenie].DNA, populacja_startowa[kolejne_kojarzenie+1].DNA])
+                        lista_pokoleniowa.append(dziecko)
+                        suma_alleli.update(dziecko.licz_wystapienia_allela())
+                    kolejne_kojarzenie += 2
+            except:
+                pass
+            zamien_wartosci_na_proporcje(suma_alleli)
+            zapisuj.writerow(suma_alleli.values())
+            populacja_startowa = lista_pokoleniowa
